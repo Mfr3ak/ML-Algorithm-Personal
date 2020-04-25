@@ -102,6 +102,10 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from time import time
 from operator import itemgetter
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import roc_auc_score, roc_curve
+from matplotlib import pyplot as plt
+%matplotlib inline
 
 # Basic cross-validation fit of DecisionTree
 def model_eval_cv(clf, x_var, y_var,cv):
@@ -163,6 +167,75 @@ clf = DecisionTreeClassifier()
 best_estimator = run_gridsearch(clf, param_grid, x_var, y_var, cv = 10)
 
 scores = model_eval_cv(best_estimator, x_var, y_var, cv = 10)
+
+def confusion_matrix_calculator(clf, x_var, y_var):
+    '''
+    Calcuates the confusion matrix and returns the matrix
+    the horizontal values of the matrix denote the actuals
+    the vertical values fo the matrix denote the predictions
     
+    Args
+    ------
+    clf : best_estimator or the classifer used for making predictions
+    
+    Returns
+    ------
+    confusion_mat : confustion matrix using y_actuals and y_predictions
+
+    '''
+    y_pred = clf.predict(x_var)
+    confusion_mat = confusion_matrix(y_var, y_pred)
+    return confusion_mat
+
+def auc_roc_Plotter(clf, x_var, y_var):
+    '''
+    Plots the AUC and ROC curve for the given classifier for different probabilites
+    
+    Args
+    ------
+    clf : best_estimator or the classifier used for making predictions
+    
+    Returns
+    ------
+    Plots  AUC-ROC Curve on the plots tab of spyder
+    
+    '''
+    y_pred_prob = clf.predict_proba(x_var)
+    fpr, tpr, _ = roc_curve(y_var, y_pred_prob[:,1])
+    plt.clf()
+    plt.plot(fpr, tpr)
+    plt.xlabel('FPR')
+    plt.ylabel('TPR')
+    plt.title('ROC Curve')
+    plt.show()  
+
+conf_mat = confusion_matrix_calculator(best_estimator, x_var, y_var)
+auc_roc_Plotter(best_estimator, x_var, y_var)
+
+# Random Forest Classifier
+from sklearn.ensemble import RandomForestClassifier
+
+# Initial Cross Validation Model
+clf = RandomForestClassifier(random_state = 0)
+model_eval_cv(clf, x_var, y_var, cv = 10)
+
+# Optimized Parameters to find best estimator
+param_grid = {'n_estimators' : [10,25,50,75,100],
+              'min_samples_leaf' : [2,5,10,20],
+              'max_samples' : [0.2,0.5,0.75],
+              "criterion": ["gini", "entropy"],
+              "min_samples_split": [2, 10, 20],
+              "max_depth": [None, 2, 5, 10],
+              "min_samples_leaf": [1, 5, 10],
+              "max_leaf_nodes": [None, 5, 10, 20]
+              }
+
+best_estimator = run_gridsearch(clf, param_grid, x_var, y_var, cv = 10)
+
+scores = model_eval_cv(best_estimator, x_var, y_var, cv = 10)
+
+conf_mat = confusion_matrix_calculator(best_estimator, x_var, y_var)
+print(conf_mat)
+auc_roc_Plotter(best_estimator, x_var, y_var)   
     
     
